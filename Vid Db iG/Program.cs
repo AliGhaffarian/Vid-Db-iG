@@ -1,5 +1,5 @@
 ﻿
-
+//some ui
 namespace Program
 {
     public class Program
@@ -8,7 +8,7 @@ namespace Program
         {
             int result = 0;
             foreach (char ch in str)
-                if(ch == c)
+                if (ch == c)
                     result++;
             return result;
         }
@@ -198,10 +198,13 @@ namespace Program
             public Date day { get; set; }
             public int NumberOfVideos { get; set; }
 
-            public VideoData(Date day, int NumerOfVideos)
+            public VideoType VideoType { get; set; }
+
+            public VideoData(Date day, int NumerOfVideos, VideoType videoType)
             {
                 this.day = day;
                 this.NumberOfVideos = NumerOfVideos;
+                this.VideoType = videoType;
             }
         }
 
@@ -251,7 +254,7 @@ namespace Program
             {
                 foreach (VideoCreator person in videoCreatorList)
                 {
-                    if (person.person.name.Equals(name , StringComparison.OrdinalIgnoreCase))
+                    if (person.person.name.Equals(name, StringComparison.OrdinalIgnoreCase))
                         return true;
                 }
                 return false;
@@ -266,12 +269,12 @@ namespace Program
                 return false;
             }
 
-            public void Print(int i )
+            public void Print(int i)
             {
                 Console.WriteLine(videoCreatorList[i].person.name);
-                for ( int j = 0 ; j < videoCreatorList[i].videoList.Count; j++) 
+                for (int j = 0; j < videoCreatorList[i].videoList.Count; j++)
                 {
-                    Console.WriteLine(videoCreatorList[i].videoList[j].day + "," + videoCreatorList[i].videoList[j].NumberOfVideos);
+                    Console.WriteLine(videoCreatorList[i].videoList[j].day + "," + videoCreatorList[i].videoList[j].NumberOfVideos + "," + videoCreatorList[i].videoList[j].VideoType);
                 }
             }
         }
@@ -296,26 +299,36 @@ namespace Program
 
             public int VideoDateSearch(Date date)
             {
-                for(int i = 0; i < videoList.Count; i++)
+                for (int i = 0; i < videoList.Count; i++)
                 {
-                    if(videoList[i].day == date)
+                    if (videoList[i].day == date)
                         return i;
                 }
                 return -1;
             }
+            public int VideoDateSearch(VideoData videoData)
+            {
+                for (int i = 0; i < videoList.Count; i++)
+                {
+                    if (videoList[i].day == videoData.day && videoList[i].VideoType == videoData.VideoType)
+                        return i;
+                }
+                return -1;
+            }
+
             public bool VideoRegister(VideoData videoData)
             {
                 try
                 {
                     int index;
-                    if ((index = VideoDateSearch(videoData.day)) != -1)
+                    if ((index = VideoDateSearch(videoData)) != -1)
                     {
                         this.videoList[index].NumberOfVideos += videoData.NumberOfVideos;
                     }
                     else
                         this.videoList.Add(videoData);
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
                     Console.WriteLine(ex.Message);
                     return false;
@@ -327,8 +340,73 @@ namespace Program
         class Person
         {
             public string name;
-            public Person (string name)
+            public Person(string name)
             { this.name = name; }
+        }
+
+        public enum VideoType
+        {
+            NoType = -1,
+            InstagramReel = 0,
+            InstagramStory = 1,
+        }
+
+        static VideoType ToVideoType(string? str)
+        { 
+            switch (str)
+            {
+                case ("InstagramReel"):
+                    {
+                        return VideoType.InstagramReel;
+                    }
+                case ("InstagramStory"):
+                    {
+                        return VideoType.InstagramStory;
+                    }
+                default: return VideoType.NoType;
+            }
+        }
+
+        static VideoType ToVideoType(int? num)
+        {
+            switch (num)
+            {
+                case (1):
+                    {
+                        return VideoType.InstagramReel;
+                    }
+                case (2):
+                    {
+                        return VideoType.InstagramStory;
+                    }
+                default: return VideoType.NoType;
+            }
+        }
+
+
+        static public VideoType InputVideoType()
+        {
+            string? input;
+            Console.WriteLine("Enter Type of Video \n1_InstagramReel\n2_InstagramStory");
+
+            VideoType videoType = VideoType.NoType;
+
+            input = Console.ReadLine();
+            videoType = ToVideoType(input);
+
+            while (videoType == VideoType.NoType)
+            {
+                Console.Clear();
+                Console.WriteLine("Invalid type of Video Try again (quit to main menu) \n1_InstagramReel 2_InstagramStory");
+
+                input = Console.ReadLine();
+                if (input.Equals("quit"))
+                    return VideoType.NoType;
+
+                videoType = ToVideoType(input);
+            }
+
+            return videoType;
         }
 
         static bool Load(ref VideoCreatorDB videoCreatorsList)
@@ -344,21 +422,21 @@ namespace Program
             string name = dataFields[0];
             string currentName = name;
 
-            int i = 0; 
+            int i = 0;
 
             while (i < dataLines.Count())
             {
 
                 name = dataFields[0];
 
-                List <VideoData> Videos = new List<VideoData>();
+                List<VideoData> Videos = new List<VideoData>();
 
-                for(; currentName == name && i < dataLines.Count(); i++)
+                for (; currentName == name && i < dataLines.Count(); i++)
                 {
                     try
                     {
-                        Videos.Add(new VideoData(Date.ExtractDateFromString(dataFields[1]), Convert.ToInt32(dataFields[2])));
-                        
+                        Videos.Add(new VideoData(Date.ExtractDateFromString(dataFields[1]), Convert.ToInt32(dataFields[2]), ToVideoType(dataFields[3])));
+
                     }
                     catch { }
                     videoCreatorsList.VideoCreatorRegister(new VideoCreator(new Person(currentName), Videos));
@@ -372,7 +450,7 @@ namespace Program
                     }
                     currentName = dataFields[0];
                 }
-                
+
             }
             return true;
         }
@@ -384,6 +462,7 @@ namespace Program
             Console.WriteLine("Name Of The Person : ");
 
             name = Console.ReadLine();
+
             if (name.Equals("quit", StringComparison.OrdinalIgnoreCase))
                 return;
 
@@ -391,30 +470,50 @@ namespace Program
             {
                 Console.Clear();
                 Console.WriteLine("Person Exists (quit to main menu) : ");
-                
+
                 name = Console.ReadLine();
-                
+
                 if (name.Equals("quit", StringComparison.OrdinalIgnoreCase))
                     return;
             }
-
+            NameLetterCorrector(ref name);
             videoCreatorList.VideoCreatorRegister(name);
 
         }
-        static void RemovePerson (ref VideoCreatorDB videoCreatorList)
+        static void RemovePerson(ref VideoCreatorDB videoCreatorList)
         {
 
+        }
+        static bool IsDigit(string str)
+        {
+            if (str == null)
+                return false;
+
+            foreach (char c in str)
+            {
+                if (c < '0' || c > '9')
+                    return false;
+            }
+
+            return true;
         }
         static void RegisterVideo(ref VideoCreatorDB videoCreatorsList, int i)
         {
             int numbersOfVideos;
-            
+            string input;
 
             Console.WriteLine("Numbers Of Videos? : ");
+            do
+            {
+                input = Console.ReadLine();
+            }
+            while (!IsDigit(input));
 
-            numbersOfVideos = Convert.ToInt32(Console.ReadLine());
+            numbersOfVideos = Convert.ToInt32(input);
 
-            
+
+
+
             Console.WriteLine("Date Of Delivered Videos? : ");
 
             Date dateOfVideo = InputDate();
@@ -422,7 +521,13 @@ namespace Program
             if (dateOfVideo.ExistsInvalidValue())
                 return;
 
-            videoCreatorsList.videoCreatorList[i].VideoRegister(new VideoData(dateOfVideo, numbersOfVideos));
+            VideoType videoType;
+            videoType = InputVideoType();
+
+            if (videoType == VideoType.NoType)
+                return;
+
+            videoCreatorsList.videoCreatorList[i].VideoRegister(new VideoData(dateOfVideo, numbersOfVideos, videoType));
         }
 
         static public Date InputDate()
@@ -435,7 +540,7 @@ namespace Program
             if (!dateString.Equals(null))
                 dateOfVideos = Date.ExtractDateFromString(dateString);
 
-            while (dateOfVideos.ExistsInvalidValue())
+            while (dateOfVideos == null || dateOfVideos.ExistsInvalidValue())
             {
                 Console.Clear();
 
@@ -470,7 +575,7 @@ namespace Program
                     foreach (VideoData vd in vc.videoList)
                     {
                         // Create a string that represents the video creator's name, day, and number of videos
-                        string dataLine = vc.person.name + "," + vd.day.ToString() + "," + vd.NumberOfVideos;
+                        string dataLine = vc.person.name + "," + vd.day.ToString() + "," + vd.NumberOfVideos + "," + vd.VideoType;
 
                         // Add the string to the list of strings
                         dataLines.Add(dataLine);
@@ -489,15 +594,26 @@ namespace Program
         {
 
             VideoCreatorDB videoCreatorList = new VideoCreatorDB();
-            
+
             Load(ref videoCreatorList);
+            /*
+            RegisterPerson(ref videoCreatorList);
+            RegisterVideo(ref videoCreatorList, 0);
 
             
+
+            RegisterPerson(ref videoCreatorList);
+            RegisterVideo(ref videoCreatorList, 1);
+            */
+
+            
+
             for (int i = 0; i < videoCreatorList.videoCreatorList.Count(); i++)
             {
                 videoCreatorList.Print(i);
             }
-            Save(videoCreatorList);
+
+            //Save(videoCreatorList);
         }
     }
 }
