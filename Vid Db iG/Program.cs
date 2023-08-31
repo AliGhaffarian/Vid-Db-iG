@@ -1,5 +1,5 @@
 ﻿
-//some ui
+//some ui doesnt add amount of videos when date is same
 namespace Program
 {
     public class Program
@@ -269,6 +269,35 @@ namespace Program
                 return false;
             }
 
+            public int VideoCreatorSearch(VideoCreator videoCreator)
+            {
+                for (int i = 0 ; i < videoCreatorList.Count; i++)
+                {
+                    if (videoCreatorList[i].person.name.Equals(videoCreator.person.name, StringComparison.OrdinalIgnoreCase))
+                        return i;
+                }
+                return -1;
+            }
+            public int VideoCreatorSearch(string name)
+            {
+                for (int i = 0 ; i < videoCreatorList.Count; i++)
+                {
+                    if (videoCreatorList[i].person.name.Equals(name, StringComparison.OrdinalIgnoreCase))
+                        return i;
+                }
+                return -1;
+            }
+            public int VideoCreatorSearch(Person passedPerson)
+            {
+                for (int i = 0; i < videoCreatorList.Count; i++)
+                {
+                    if (videoCreatorList[i].person.name.Equals(passedPerson.name, StringComparison.OrdinalIgnoreCase))
+                        return i;
+                }
+                return -1;
+            }
+
+
             public void Print(int i)
             {
                 Console.WriteLine(videoCreatorList[i].person.name);
@@ -306,7 +335,7 @@ namespace Program
                 }
                 return -1;
             }
-            public int VideoDateSearch(VideoData videoData)
+            public int VideoTypeAndDateSearch(VideoData videoData)
             {
                 for (int i = 0; i < videoList.Count; i++)
                 {
@@ -321,7 +350,7 @@ namespace Program
                 try
                 {
                     int index;
-                    if ((index = VideoDateSearch(videoData)) != -1)
+                    if ((index = VideoTypeAndDateSearch(videoData)) != -1)
                     {
                         this.videoList[index].NumberOfVideos += videoData.NumberOfVideos;
                     }
@@ -392,7 +421,11 @@ namespace Program
             VideoType videoType = VideoType.NoType;
 
             input = Console.ReadLine();
-            videoType = ToVideoType(input);
+            
+            if(IsDigit(input))
+                videoType = ToVideoType(Convert.ToInt32(input));
+            else
+                videoType = ToVideoType(input);
 
             while (videoType == VideoType.NoType)
             {
@@ -416,6 +449,9 @@ namespace Program
                 return false;
 
             string[] dataLines = File.ReadAllLines(fileName);
+
+            if (dataLines.Length == 0)
+                return false;
 
             string[] dataFields = dataLines[0].Split(',');
 
@@ -455,11 +491,13 @@ namespace Program
             return true;
         }
 
+        
+
         static void RegisterPerson(ref VideoCreatorDB videoCreatorList)
         {
             string name;
             Console.Clear();
-            Console.WriteLine("Name Of The Person : ");
+            Console.WriteLine("Enter Name Of The Person : ");
 
             name = Console.ReadLine();
 
@@ -497,12 +535,47 @@ namespace Program
 
             return true;
         }
-        static void RegisterVideo(ref VideoCreatorDB videoCreatorsList, int i)
+        static int PersonInputAndSearch(VideoCreatorDB videoCreatorList)
+        {
+            string? name;
+            bool isFirstCycle = true;
+            Console.Clear();
+            Console.WriteLine("Name Of The Creator?");
+            do
+            {
+                if (isFirstCycle == false)
+                    Console.WriteLine("Creator Doesn't Exists or invalid input try again (quit to main menu)");
+
+                name = Console.ReadLine();
+                if (name.Equals("quit"))
+                    return -1;
+
+                isFirstCycle = false;
+
+            } while (name.Equals(null) || !videoCreatorList.ExistsVideoCreator(name));
+
+            return videoCreatorList.VideoCreatorSearch(name);
+        }
+
+        static void RegisterVideo(ref VideoCreatorDB videoCreatorList)
         {
             int numbersOfVideos;
             string input;
+            string? name;
+            int i;
+            bool isFirstCycle = true;
 
-            Console.WriteLine("Numbers Of Videos? : ");
+            Console.Clear();
+
+            i = PersonInputAndSearch(videoCreatorList);
+
+            Console.Clear();
+
+            if (i == -1)
+                return;
+
+
+            Console.WriteLine("Amount Of Videos? : ");
             do
             {
                 input = Console.ReadLine();
@@ -527,7 +600,7 @@ namespace Program
             if (videoType == VideoType.NoType)
                 return;
 
-            videoCreatorsList.videoCreatorList[i].VideoRegister(new VideoData(dateOfVideo, numbersOfVideos, videoType));
+            videoCreatorList.videoCreatorList[i].VideoRegister(new VideoData(dateOfVideo, numbersOfVideos, videoType));
         }
 
         static public Date InputDate()
@@ -590,28 +663,110 @@ namespace Program
             }
             return true;
         }
-        static public void Main()
+
+        static void PrintEveryOne(VideoCreatorDB videoCreatorList)
         {
-
-            VideoCreatorDB videoCreatorList = new VideoCreatorDB();
-
-            Load(ref videoCreatorList);
-            /*
-            RegisterPerson(ref videoCreatorList);
-            RegisterVideo(ref videoCreatorList, 0);
-
-            
-
-            RegisterPerson(ref videoCreatorList);
-            RegisterVideo(ref videoCreatorList, 1);
-            */
-
-            
-
+            Console.Clear();
             for (int i = 0; i < videoCreatorList.videoCreatorList.Count(); i++)
             {
                 videoCreatorList.Print(i);
             }
+            GetKey();
+        }
+        static void PrintCommands(string functionName)
+        {
+            string[] mainMenuCommands = { "reg_vid", "reg_person",
+                                            "printperson", "printeveryone",
+                                            "search_date","search_vid",
+                                            "del_person",
+                                            "edit_vid", "edit_person" };
+
+            Console.Clear();
+            switch(functionName)
+            {
+                case ("MainMenu"): 
+                    {
+                        foreach (string command in mainMenuCommands)
+                            Console.WriteLine(command);
+                        break;
+                    }
+            }
+
+            GetKey();
+        }
+
+        static void GetKey()
+        {
+            Console.WriteLine("Press Any Key To Continue...");
+            Console.ReadKey();
+        }
+
+        static bool SpecialCommandHandler(string functionName, string? input)
+        {
+            if (input == "Help")
+            {
+                PrintCommands(functionName);
+                return true;
+                
+            }
+
+            if (input == "Exit") 
+            {
+                Environment.Exit(-1);
+                return true;
+            }
+            return false;
+        }
+
+        static void MainMenu(ref VideoCreatorDB videoCreatorDB)
+        {
+            string[] mainMenuCommands = { "reg_vid", "reg_person",
+                                            "printPerson", "printeveryone",
+                                            "search_date","search_vid",
+                                            "del_person",
+                                            "edit_vid", "edit_person" };
+            while (true)
+            {
+                Console.Clear();
+                Console.WriteLine("Welcome Ali\nHelp for commands\nExit to quit the program");
+                
+                string? input;
+                input = Console.ReadLine();
+                if (input == null)
+                    continue;
+
+                SpecialCommandHandler("MainMenu", input);
+
+                switch(input)
+                {
+                    case ("reg_person"):
+                        {
+                            RegisterPerson(ref videoCreatorDB);
+                            break;
+                        }
+                    case ("reg_video"):
+                        {
+                            RegisterVideo(ref videoCreatorDB);
+                            break;
+                        }
+                    case ("printeveryone"):
+                        {
+                            PrintEveryOne(videoCreatorDB);
+                            break;
+                        }
+                }
+            }
+
+
+        }
+
+        static public void Main()
+        {
+            VideoCreatorDB videoCreatorList = new VideoCreatorDB();
+
+            Load(ref videoCreatorList);
+            while(true)
+                MainMenu(ref videoCreatorList);
 
             //Save(videoCreatorList);
         }
