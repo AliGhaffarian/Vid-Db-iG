@@ -62,7 +62,7 @@ namespace Program
             {
 
                 if (!StringContainsDate(date))
-                    return null;
+                    return new Date();
 
                 //finding index of each / and length of month
                 int firstSlashIndex = date.IndexOf('/');
@@ -119,6 +119,28 @@ namespace Program
             {
                 InitBack();
             }
+            public Date(string? dateStr)
+            {
+                if (dateStr == null)
+                    return;
+                Date temp = Date.ExtractDateFromString(dateStr);
+                if (temp.ExistsInvalidValue())
+                {
+                    InitBack();
+                    return;
+                }
+
+                Day = temp.Day;
+                Month = temp.Month;
+                Year = temp.Year;
+            }
+            public Date(Date date)
+            {
+                Day = date.Day;
+                Month = date.Month;
+                Year = date.Year;
+            }
+
             public void Print()
             {
                 string number = year.ToString().PadLeft(4, '0') + "/"
@@ -443,13 +465,16 @@ namespace Program
             while (videoType == VideoType.NoType)
             {
                 Console.Clear();
-                Console.WriteLine("Invalid type of Video Try again (quit to main menu) \n1_InstagramReel 2_InstagramStory");
+                Console.WriteLine("Invalid type of Video Try again (quit to main menu) \n1_InstagramReel\n2_InstagramStory");
 
                 input = Console.ReadLine();
                 if (input.Equals("quit"))
                     return VideoType.NoType;
 
-                videoType = ToVideoType(input);
+                if (IsDigit(input))
+                    videoType = ToVideoType(Convert.ToInt32(input));
+                else
+                    videoType = ToVideoType(input);
             }
 
             return videoType;
@@ -517,10 +542,10 @@ namespace Program
             if (name.Equals("quit", StringComparison.OrdinalIgnoreCase))
                 return;
 
-            while (videoCreatorList.ExistsVideoCreator(name))
+            while (videoCreatorList.ExistsVideoCreator(name) || name.Length == 0)
             {
                 Console.Clear();
-                Console.WriteLine("Person Exists (quit to main menu) : ");
+                Console.WriteLine("Person Exists or invalid input try again (quit to main menu) : ");
 
                 name = Console.ReadLine();
 
@@ -537,7 +562,7 @@ namespace Program
         }
         static bool IsDigit(string str)
         {
-            if (str == null)
+            if (str.Length == 0)
                 return false;
 
             foreach (char c in str)
@@ -552,10 +577,10 @@ namespace Program
         {
             string? name;
             bool isFirstCycle = true;
-            Console.Clear();
-            Console.WriteLine("Name Of The Creator?");
             do
             {
+                Console.Clear();
+                Console.WriteLine("Name Of The Creator?");
                 if (isFirstCycle == false)
                     Console.WriteLine("Creator Doesn't Exists or invalid input try again (quit to main menu)");
 
@@ -582,23 +607,24 @@ namespace Program
 
             i = PersonInputAndSearch(videoCreatorList);
 
-            Console.Clear();
-
+            
             if (i == -1)
                 return;
 
-
-            Console.WriteLine("Amount Of Videos? : ");
             do
             {
+                Console.Clear();
+                Console.WriteLine("Amount Of Videos? : ");
+                if(isFirstCycle == false)
+                    Console.WriteLine("invalid input try again");
+
                 input = Console.ReadLine();
+
+                isFirstCycle = false;
             }
             while (!IsDigit(input));
 
             numbersOfVideos = Convert.ToInt32(input);
-
-
-
 
             Console.WriteLine("Date Of Delivered Videos? : ");
 
@@ -619,14 +645,14 @@ namespace Program
         static public Date InputDate()
         {
             string? dateString;
-            Date dateOfVideos = Date.ExtractDateFromString("-1/-1/-1");
+            Date dateOfVideos = new Date();
 
             dateString = Console.ReadLine();
 
-            if (!dateString.Equals(null))
+            if (dateString.Length != 0)
                 dateOfVideos = Date.ExtractDateFromString(dateString);
-
-            while (dateString == null || dateOfVideos.ExistsInvalidValue())
+            
+            while (dateString.Length == 0 || dateOfVideos.ExistsInvalidValue())
             {
                 Console.Clear();
 
@@ -640,7 +666,6 @@ namespace Program
                 if (dateString.Equals(null))
                     continue;
 
-                dateString = Console.ReadLine();
                 dateOfVideos = Date.ExtractDateFromString(dateString);
             }
 
