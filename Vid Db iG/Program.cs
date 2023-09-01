@@ -1,5 +1,5 @@
 ﻿
-//some ui doesnt add amount of videos when date is same
+//some ui doesnt 
 namespace Program
 {
     public class Program
@@ -187,6 +187,16 @@ namespace Program
                 return false;
             }
 
+            public static bool operator ==(Date first, Date second)
+            {
+                return first.day == second.day && first.Month == second.Month && first.Year == second.Year;
+            }
+
+            public static bool operator !=(Date first, Date second)
+            {
+                return !(first == second);
+            }
+
             public override string ToString()
             {
                 return (Year + "/" + Month + "/" + Day);
@@ -337,6 +347,9 @@ namespace Program
             }
             public int VideoTypeAndDateSearch(VideoData videoData)
             {
+                if(videoList.Count == 0)
+                    return -1;
+
                 for (int i = 0; i < videoList.Count; i++)
                 {
                     if (videoList[i].day == videoData.day && videoList[i].VideoType == videoData.VideoType)
@@ -613,7 +626,7 @@ namespace Program
             if (!dateString.Equals(null))
                 dateOfVideos = Date.ExtractDateFromString(dateString);
 
-            while (dateOfVideos == null || dateOfVideos.ExistsInvalidValue())
+            while (dateString == null || dateOfVideos.ExistsInvalidValue())
             {
                 Console.Clear();
 
@@ -764,10 +777,12 @@ namespace Program
         {
             VideoCreatorDB videoCreatorList = new VideoCreatorDB();
 
-            Load(ref videoCreatorList);
+            //Load(ref videoCreatorList);
+            
+            
             while(true)
                 MainMenu(ref videoCreatorList);
-
+            
             //Save(videoCreatorList);
         }
     }
