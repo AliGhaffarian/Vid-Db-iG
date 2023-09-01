@@ -657,15 +657,18 @@ namespace Program
                 // Loop through the list of video creators
                 foreach (VideoCreator vc in videoCreatorList.videoCreatorList)
                 {
+                    if (vc.videoList.Count == 0)
+                        dataLines.Add(vc.person.name);
                     // Loop through the list of video data
-                    foreach (VideoData vd in vc.videoList)
-                    {
-                        // Create a string that represents the video creator's name, day, and number of videos
-                        string dataLine = vc.person.name + "," + vd.day.ToString() + "," + vd.NumberOfVideos + "," + vd.VideoType;
+                    else
+                        foreach (VideoData vd in vc.videoList)
+                        {
+                            // Create a string that represents the video creator's name, day, and number of videos
+                            string dataLine = vc.person.name + "," + vd.day.ToString() + "," + vd.NumberOfVideos + "," + vd.VideoType;
 
-                        // Add the string to the list of strings
-                        dataLines.Add(dataLine);
-                    }
+                            // Add the string to the list of strings
+                            dataLines.Add(dataLine);
+                        }
                 }
                 File.WriteAllLines("VideoCreatorsData.txt", dataLines.ToArray());
             }
@@ -677,6 +680,22 @@ namespace Program
             return true;
         }
 
+        static void PrintPerson(string name)
+        {
+            int index = videoCreatorList.VideoCreatorSearch(name);
+
+            Console.Clear();
+
+            if (index == -1)
+            {
+                Console.WriteLine("NotFound");
+                GetKey();
+                return;
+            }
+
+            videoCreatorList.Print(index);
+            GetKey();
+        }
         static void PrintEveryOne(VideoCreatorDB videoCreatorList)
         {
             Console.Clear();
@@ -688,11 +707,11 @@ namespace Program
         }
         static void PrintCommands(string functionName)
         {
-            string[] mainMenuCommands = { "reg_vid", "reg_person",
-                                            "printperson", "printeveryone",
-                                            "search_date","search_vid",
-                                            "del_person",
-                                            "edit_vid", "edit_person" };
+            string[] mainMenuCommands = { "reg video", "reg person",
+                                            "print $name", "print all",
+                                            "search date","search vid",
+                                            "del person",
+                                            "edit vid", "edit person" };
 
             Console.Clear();
             switch(functionName)
@@ -725,6 +744,7 @@ namespace Program
 
             if (input == "Exit") 
             {
+                Save(videoCreatorList);
                 Environment.Exit(-1);
                 return true;
             }
@@ -733,11 +753,11 @@ namespace Program
 
         static void MainMenu(ref VideoCreatorDB videoCreatorDB)
         {
-            string[] mainMenuCommands = { "reg_vid", "reg_person",
-                                            "printPerson", "printeveryone",
-                                            "search_date","search_vid",
-                                            "del_person",
-                                            "edit_vid", "edit_person" };
+            string[] mainMenuCommands = { "reg video", "reg person",
+                                            "print $name", "print all",
+                                            "search date","search vid",
+                                            "del person",
+                                            "edit vid", "edit person" };
             while (true)
             {
                 Console.Clear();
@@ -748,42 +768,61 @@ namespace Program
                 if (input == null)
                     continue;
 
+                //command section
                 SpecialCommandHandler("MainMenu", input);
 
-                switch(input)
+                if (input.StartsWith("reg "))
                 {
-                    case ("reg_person"):
-                        {
-                            RegisterPerson(ref videoCreatorDB);
-                            break;
-                        }
-                    case ("reg_video"):
-                        {
-                            RegisterVideo(ref videoCreatorDB);
-                            break;
-                        }
-                    case ("printeveryone"):
-                        {
-                            PrintEveryOne(videoCreatorDB);
-                            break;
-                        }
+                    input = input.Substring(4);
+                    switch(input)
+                    {
+                        case "person":
+                            {
+                                RegisterPerson(ref videoCreatorDB);
+                                break;
+                            }
+                        case "video":
+                            {
+                                RegisterVideo(ref videoCreatorDB);
+                                break;
+                            }
+                    }
+                }
+                if (input.StartsWith("print "))
+                {
+                    input = input.Substring(6);
+                    switch (input)
+                    {
+                        case "all":
+                            {
+                                PrintEveryOne(videoCreatorDB);
+                                break;
+                            }
+                        default:
+                            {
+                                PrintPerson(input);
+                                break;
+                            }
+                    }
                 }
             }
 
 
         }
 
+        static VideoCreatorDB videoCreatorList = new VideoCreatorDB();
+
         static public void Main()
         {
-            VideoCreatorDB videoCreatorList = new VideoCreatorDB();
+            //VideoCreatorDB videoCreatorList = new VideoCreatorDB();
 
-            //Load(ref videoCreatorList);
+            Load(ref videoCreatorList);
             
             
             while(true)
                 MainMenu(ref videoCreatorList);
             
-            //Save(videoCreatorList);
+            Save(videoCreatorList);
         }
     }
 }
