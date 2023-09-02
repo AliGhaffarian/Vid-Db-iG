@@ -388,7 +388,7 @@ namespace Program
 
                 for (int i = 0; i < videoList.Count; i++)
                 {
-                    if (videoList[i].day == videoData.day && videoList[i].VideoType == videoData.VideoType)
+                    if (videoList[i].day == videoData.day && videoList[i].VideoType.TypeName == videoData.VideoType.TypeName)
                         return i;
                 }
                 return -1;
