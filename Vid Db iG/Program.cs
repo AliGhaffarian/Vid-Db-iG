@@ -230,7 +230,21 @@ namespace Program
             public Date day { get; set; }
             public int NumberOfVideos { get; set; }
 
-            public VideoType VideoType { get; set; }
+            VideoType videoType;
+
+            public VideoType VideoType
+            {
+                set
+                {
+                    if (videoTypeDB.Exists(value))
+                        videoType = value;
+                    else videoType = new VideoType("NoType");
+                }
+                get
+                {
+                    return videoType;
+                }
+            }
 
             public VideoData(Date day, int NumerOfVideos, VideoType videoType)
             {
@@ -303,7 +317,7 @@ namespace Program
 
             public int VideoCreatorSearch(VideoCreator videoCreator)
             {
-                for (int i = 0 ; i < videoCreatorList.Count; i++)
+                for (int i = 0; i < videoCreatorList.Count; i++)
                 {
                     if (videoCreatorList[i].person.name.Equals(videoCreator.person.name, StringComparison.OrdinalIgnoreCase))
                         return i;
@@ -312,7 +326,7 @@ namespace Program
             }
             public int VideoCreatorSearch(string name)
             {
-                for (int i = 0 ; i < videoCreatorList.Count; i++)
+                for (int i = 0; i < videoCreatorList.Count; i++)
                 {
                     if (videoCreatorList[i].person.name.Equals(name, StringComparison.OrdinalIgnoreCase))
                         return i;
@@ -335,7 +349,7 @@ namespace Program
                 Console.WriteLine(videoCreatorList[i].person.name);
                 for (int j = 0; j < videoCreatorList[i].videoList.Count; j++)
                 {
-                    Console.WriteLine(videoCreatorList[i].videoList[j].day + "," + videoCreatorList[i].videoList[j].NumberOfVideos + "," + videoCreatorList[i].videoList[j].VideoType);
+                    Console.WriteLine(videoCreatorList[i].videoList[j].day + "," + videoCreatorList[i].videoList[j].NumberOfVideos + "," + videoCreatorList[i].videoList[j].VideoType.TypeName);
                 }
             }
         }
@@ -369,7 +383,7 @@ namespace Program
             }
             public int VideoTypeAndDateSearch(VideoData videoData)
             {
-                if(videoList.Count == 0)
+                if (videoList.Count == 0)
                     return -1;
 
                 for (int i = 0; i < videoList.Count; i++)
@@ -408,78 +422,185 @@ namespace Program
             { this.name = name; }
         }
 
-        public enum VideoType
-        {
-            NoType = -1,
-            InstagramReel = 0,
-            InstagramStory = 1,
-        }
-        
 
-        static VideoType ToVideoType(string? str)
-        { 
-            switch (str)
+        class VideoType
+        {
+            string typeName;
+            public VideoType(string typeName)
             {
-                case ("InstagramReel"):
-                    {
-                        return VideoType.InstagramReel;
-                    }
-                case ("InstagramStory"):
-                    {
-                        return VideoType.InstagramStory;
-                    }
-                default: return VideoType.NoType;
+                this.typeName = typeName;
+            }
+            public VideoType(VideoType type)
+            {
+                this.typeName = type.typeName;
+            }
+            public string TypeName
+            {
+                get { return typeName; }
+                set { typeName = value; }
             }
         }
 
-        static VideoType ToVideoType(int? num)
+        class VideoTypeDB
         {
-            switch (num)
+            List<VideoType> videoTypes = new List<VideoType>();
+            public VideoTypeDB()
             {
-                case (1):
-                    {
-                        return VideoType.InstagramReel;
-                    }
-                case (2):
-                    {
-                        return VideoType.InstagramStory;
-                    }
-                default: return VideoType.NoType;
+            }
+            public VideoTypeDB(string[] types)
+            {
+                for (int i = 0; i < types.Count(); i++)
+                {
+                    videoTypes.Add(new VideoType(types[i]));
+                }
+            }
+            public VideoTypeDB(VideoType[] types)
+            {
+                foreach (VideoType videoType in types)
+                    videoTypes.Add(videoType);
+            }
+            public VideoTypeDB(List<VideoType> types)
+            {
+                foreach (VideoType type in types)
+                    videoTypes.Add(type);
+            }
+            public int VideoTypeSearch(string typeName)
+            {
+                for (int i = 0; i < this.videoTypes.Count; i++)
+                {
+                    if (typeName.Equals(videoTypes[i].TypeName, StringComparison.OrdinalIgnoreCase))
+                        return i;
+                }
+                return -1;
+            }
+            public int VideoTypeSearch(VideoType type)
+            {
+                for (int i = 0; i < this.videoTypes.Count; i++)
+                {
+                    if (type.TypeName.Equals(videoTypes[i].TypeName, StringComparison.OrdinalIgnoreCase))
+                        return i;
+                }
+                return -1;
+            }
+            public bool RegisterType(VideoType type)
+            {
+                if (VideoTypeSearch(type) != -1)
+                    return false;
+
+                videoTypes.Add(type);
+                return true;
+            }
+            public bool RegisterType(string typeName)
+            {
+                if (VideoTypeSearch(typeName) != -1)
+                    return false;
+
+                videoTypes.Add(new VideoType(typeName));
+                return true;
+            }
+            public bool RemoveType(VideoType type)
+            {
+                if (VideoTypeSearch(type) == -1)
+                    return false;
+
+                videoTypes.Remove(type);
+                return true;
+            }
+            public bool RemoveType(string typeName)
+            {
+                if (VideoTypeSearch(typeName) == -1)
+                    return false;
+
+                videoTypes.Remove(new VideoType(typeName));
+                return true;
+            }
+            public void Print(int i = -1)
+            {
+                if( i == -1)
+                    for(int j = 0; j < videoTypes.Count(); j++)
+                        Console.WriteLine((j + 1 ) + "_" + videoTypes[j].TypeName);
+
+                if( i != -1 )
+                    Console.WriteLine(videoTypes[i].TypeName);
+            }
+            public bool Exists(string typeName)
+            {
+                for (int i = 0; i < this.videoTypes.Count; i++)
+                {
+                    if (typeName.Equals(videoTypes[i].TypeName, StringComparison.OrdinalIgnoreCase))
+                        return true;
+                }
+                return false;
+            }
+            public bool Exists(VideoType type)
+            {
+                for (int i = 0; i < this.videoTypes.Count; i++)
+                {
+                    if (type.TypeName.Equals(videoTypes[i].TypeName, StringComparison.OrdinalIgnoreCase))
+                        return true;
+                }
+                return false;
+            }
+            public bool Exists(int? index)
+            {
+                if(index == null)
+                    return false;
+
+                if (index < videoTypes.Count && index >= 0)
+                    return true;
+
+                return false;
+            }
+            public string Lookup(int index)
+            {
+                if (index >= videoTypes.Count || index <= -1)
+                    return "NoType";
+                return videoTypes[index].TypeName;
             }
         }
+        static string[] defaultVideoTypes = { "InstagramReel", "InstagramStory", "Other", "YoutubeShort", "YoutubeVideo"};
+        static VideoTypeDB videoTypeDB = new VideoTypeDB(defaultVideoTypes);
 
-
-        static public VideoType InputVideoType()
+        static string InputVideoType()
         {
             string? input;
-            Console.WriteLine("Enter Type of Video \n1_InstagramReel\n2_InstagramStory");
 
-            VideoType videoType = VideoType.NoType;
+            Console.WriteLine("Enter Type of Video ");
+            videoTypeDB.Print();
 
             input = Console.ReadLine();
-            
-            if(IsDigit(input))
-                videoType = ToVideoType(Convert.ToInt32(input));
-            else
-                videoType = ToVideoType(input);
 
-            while (videoType == VideoType.NoType)
+            int inputInt = -1;
+
+            if(IsDigit(input))
+                inputInt = Convert.ToInt32(input);
+            inputInt--;
+
+            bool intInputDoesntExist = true;
+            bool stringInputDoesntExists = true;
+
+            while ((intInputDoesntExist = !videoTypeDB.Exists(inputInt)) && (stringInputDoesntExists = !videoTypeDB.Exists(input)))
             {
                 Console.Clear();
-                Console.WriteLine("Invalid type of Video Try again (quit to main menu) \n1_InstagramReel\n2_InstagramStory");
+                Console.WriteLine("Invalid type of Video Try again (quit to main menu)");
+                videoTypeDB.Print();
 
                 input = Console.ReadLine();
+
                 if (input.Equals("quit"))
-                    return VideoType.NoType;
+                    return "NoType";
 
                 if (IsDigit(input))
-                    videoType = ToVideoType(Convert.ToInt32(input));
-                else
-                    videoType = ToVideoType(input);
+                    inputInt = Convert.ToInt32(input);
+                inputInt--;
             }
 
-            return videoType;
+            if (intInputDoesntExist == false)
+                return videoTypeDB.Lookup(inputInt);
+
+            return input;
         }
+            
 
         static bool Load(ref VideoCreatorDB videoCreatorsList)
         {
@@ -510,7 +631,7 @@ namespace Program
                 {
                     try
                     {
-                        Videos.Add(new VideoData(Date.ExtractDateFromString(dataFields[1]), Convert.ToInt32(dataFields[2]), ToVideoType(dataFields[3])));
+                        Videos.Add(new VideoData(Date.ExtractDateFromString(dataFields[1]), Convert.ToInt32(dataFields[2]), new VideoType(dataFields[3])));
 
                     }
                     catch { }
@@ -635,9 +756,9 @@ namespace Program
                 return;
 
             VideoType videoType;
-            videoType = InputVideoType();
+            videoType = new VideoType(InputVideoType());
 
-            if (videoType == VideoType.NoType)
+            if (videoType.TypeName == "NoType")
                 return;
 
             videoCreatorList.videoCreatorList[i].VideoRegister(new VideoData(dateOfVideo, numbersOfVideos, videoType));
@@ -690,7 +811,7 @@ namespace Program
                         foreach (VideoData vd in vc.videoList)
                         {
                             // Create a string that represents the video creator's name, day, and number of videos
-                            string dataLine = vc.person.name + "," + vd.day.ToString() + "," + vd.NumberOfVideos + "," + vd.VideoType;
+                            string dataLine = vc.person.name + "," + vd.day.ToString() + "," + vd.NumberOfVideos + "," + vd.VideoType.TypeName;
 
                             // Add the string to the list of strings
                             dataLines.Add(dataLine);
