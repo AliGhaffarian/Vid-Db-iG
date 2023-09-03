@@ -577,6 +577,8 @@ namespace Program
             else
                 input = inputArray[0];
 
+            
+
             int inputInt = -1;
 
             if(IsDigit(input))
