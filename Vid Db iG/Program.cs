@@ -558,17 +558,24 @@ namespace Program
                 return videoTypes[index].TypeName;
             }
         }
-        static string[] defaultVideoTypes = { "InstagramReel", "InstagramStory", "Other", "YoutubeShort", "YoutubeVideo"};
-        static VideoTypeDB videoTypeDB = new VideoTypeDB(defaultVideoTypes);
-
-        static string InputVideoType()
+        
+        static string InputVideoType(string[] inputArray)
         {
             string? input;
+            
+            inputArray = inputArray.Skip(1).ToArray();
+            bool isPreCommanded = inputArray.Length > 0;
 
-            Console.WriteLine("Enter Type of Video ");
-            videoTypeDB.Print();
+            if (!isPreCommanded)
+            {
+                Console.WriteLine("Enter Type of Video ");
+                videoTypeDB.Print();
+            }
 
-            input = Console.ReadLine();
+            if (!isPreCommanded)
+                input = Console.ReadLine();
+            else
+                input = inputArray[0];
 
             int inputInt = -1;
 
@@ -653,13 +660,19 @@ namespace Program
 
         
 
-        static void RegisterPerson(ref VideoCreatorDB videoCreatorList)
+        static void RegisterPerson(ref VideoCreatorDB videoCreatorList, string[] inputArray)
         {
             string name;
             Console.Clear();
             Console.WriteLine("Enter Name Of The Person : ");
 
-            name = Console.ReadLine();
+
+            inputArray = inputArray.Skip(1).ToArray();
+            
+            if(inputArray.Length == 0 )
+                name = Console.ReadLine();
+            else 
+                name = inputArray[0];
 
             if (name.Equals("quit", StringComparison.OrdinalIgnoreCase))
                 return;
@@ -678,6 +691,20 @@ namespace Program
             videoCreatorList.VideoCreatorRegister(name);
 
         }
+        static void Regs(string[] inputArray)
+        {
+            inputArray = inputArray.Skip(1).ToArray();
+
+            if (inputArray.Length == 0 || !regTypes.Contains(inputArray[0]))
+                return;
+
+            if(inputArray[0] == regTypes[0])
+                RegisterPerson(ref videoCreatorList, inputArray);
+            if (inputArray[0] == regTypes[1])
+                RegisterVideo(ref videoCreatorList, inputArray);
+
+        }
+
         static void RemovePerson(ref VideoCreatorDB videoCreatorList)
         {
 
@@ -695,29 +722,41 @@ namespace Program
 
             return true;
         }
-        static int PersonInputAndSearch(VideoCreatorDB videoCreatorList)
+        static int PersonInputAndSearch(VideoCreatorDB videoCreatorList, string[] inputArray)
         {
             string? name;
             bool isFirstCycle = true;
+            inputArray = inputArray.Skip(1).ToArray();
+            bool isPreCommanded = inputArray.Length > 0;
+
             do
             {
                 Console.Clear();
-                Console.WriteLine("Name Of The Creator?");
+                
+                if(!isPreCommanded)
+                    Console.WriteLine("Name Of The Creator?");
+                
                 if (isFirstCycle == false)
                     Console.WriteLine("Creator Doesn't Exists or invalid input try again (quit to main menu)");
+                
+                if(!isPreCommanded)
+                    name = Console.ReadLine();
+                else 
+                    name = inputArray[0];
 
-                name = Console.ReadLine();
                 if (name.Equals("quit"))
                     return -1;
 
                 isFirstCycle = false;
+
+                isPreCommanded = false;
 
             } while (name.Equals(null) || !videoCreatorList.ExistsVideoCreator(name));
 
             return videoCreatorList.VideoCreatorSearch(name);
         }
 
-        static void RegisterVideo(ref VideoCreatorDB videoCreatorList)
+        static void RegisterVideo(ref VideoCreatorDB videoCreatorList, string[] inputArray)
         {
             int numbersOfVideos;
             string input;
@@ -727,36 +766,50 @@ namespace Program
 
             Console.Clear();
 
-            i = PersonInputAndSearch(videoCreatorList);
+            i = PersonInputAndSearch(videoCreatorList, inputArray);
+            //removing the possible command that was meant for PersonInputAndSearch
+            inputArray = inputArray.Skip(1).ToArray();
 
-            
             if (i == -1)
                 return;
+
+            inputArray = inputArray.Skip(1).ToArray();
+            bool isPreCommanded = inputArray.Count() > 0;
 
             do
             {
                 Console.Clear();
-                Console.WriteLine("Amount Of Videos? : ");
+
+                if(!isPreCommanded)
+                    Console.WriteLine("Amount Of Videos? : ");
                 if(isFirstCycle == false)
                     Console.WriteLine("invalid input try again");
 
-                input = Console.ReadLine();
+                if (!isPreCommanded)
+                    input = Console.ReadLine();
+                else
+                    input = inputArray[0];
 
                 isFirstCycle = false;
+                isPreCommanded = false;
             }
             while (!IsDigit(input));
 
             numbersOfVideos = Convert.ToInt32(input);
 
-            Console.WriteLine("Date Of Delivered Videos? : ");
+            
+            Date dateOfVideo = new Date();
+            dateOfVideo = InputDate(inputArray);
 
-            Date dateOfVideo = InputDate();
-
+            //removing the possible command that was meant for InputDate
+            inputArray = inputArray.Skip(1).ToArray();
+            
             if (dateOfVideo.ExistsInvalidValue())
                 return;
 
             VideoType videoType;
-            videoType = new VideoType(InputVideoType());
+
+            videoType = new VideoType(InputVideoType(inputArray));
 
             if (videoType.TypeName == "NoType")
                 return;
@@ -764,12 +817,21 @@ namespace Program
             videoCreatorList.videoCreatorList[i].VideoRegister(new VideoData(dateOfVideo, numbersOfVideos, videoType));
         }
 
-        static public Date InputDate()
+        static public Date InputDate(string[] inputArray)
         {
             string? dateString;
             Date dateOfVideos = new Date();
 
-            dateString = Console.ReadLine();
+            inputArray = inputArray.Skip(1).ToArray();
+            bool isPreCommanded = inputArray.Length > 0;
+
+            if (!isPreCommanded)
+                Console.WriteLine("Date Of Delivered Videos? : ");
+
+            if(!isPreCommanded)
+                dateString = Console.ReadLine();
+            else 
+                dateString = inputArray[0];
 
             if (dateString.Length != 0)
                 dateOfVideos = Date.ExtractDateFromString(dateString);
@@ -852,6 +914,14 @@ namespace Program
             }
             GetKey();
         }
+        static void Prints(string[] inputArray)
+        {
+            inputArray = inputArray.Skip(1).ToArray();
+            if (printTypes[0] == inputArray[0])
+                PrintEveryOne(videoCreatorList);
+            else 
+                PrintPerson(inputArray[0]);
+        }
         static void PrintCommands(string functionName)
         {
             string[] mainMenuCommands = { "reg video", "reg person",
@@ -918,57 +988,35 @@ namespace Program
                 //command section
                 SpecialCommandHandler("MainMenu", input);
 
+                string[] inputToArray = input.Split(' ');
+
                 if (input.StartsWith("reg "))
                 {
-                    input = input.Substring(4);
-                    switch(input)
-                    {
-                        case "person":
-                            {
-                                RegisterPerson(ref videoCreatorDB);
-                                break;
-                            }
-                        case "video":
-                            {
-                                RegisterVideo(ref videoCreatorDB);
-                                break;
-                            }
-                    }
+                   Regs(inputToArray);
                 }
                 if (input.StartsWith("print "))
                 {
-                    input = input.Substring(6);
-                    switch (input)
-                    {
-                        case "all":
-                            {
-                                PrintEveryOne(videoCreatorDB);
-                                break;
-                            }
-                        default:
-                            {
-                                PrintPerson(input);
-                                break;
-                            }
-                    }
+                   Prints(inputToArray);
                 }
             }
-
-
         }
 
         static VideoCreatorDB videoCreatorList = new VideoCreatorDB();
+        static string[] regTypes = { "person", "vid", "vidType" };
+        static string[] printTypes = { "all" };
+        static string[] defaultVideoTypes = { "InstagramReel", "InstagramStory", "Other", "YoutubeShort", "YoutubeVideo" };
+        static VideoTypeDB videoTypeDB = new VideoTypeDB(defaultVideoTypes);
 
         static public void Main()
         {
             //VideoCreatorDB videoCreatorList = new VideoCreatorDB();
 
             Load(ref videoCreatorList);
-            
-            
+
+
             while(true)
                 MainMenu(ref videoCreatorList);
-            
+
             Save(videoCreatorList);
         }
     }
