@@ -2,7 +2,10 @@
 /*-fixed a bug when exiting didnt led to saving videotypedata
  *-added the feature to register video types
  *-added the feature to remove people
+ *-added the feature to remove videotypes
  *-renamed some of the methods of VideoCreatorDB
+ *-fixed some bugs
+ *-fixed more bugs
  */
 
 namespace Program
@@ -19,8 +22,14 @@ namespace Program
         }
         static public void NameLetterCorrector(ref string name)
         {
-            name.Substring(0, 1).ToUpper();
-            name.Substring(1).ToLower();
+            name  = name.Substring(0, 1).ToUpper() + name.Substring(1).ToLower();
+        }
+
+        static public string NameLetterCorrector(string name)
+        {
+            name = name.Substring(0, 1).ToUpper() + name.Substring(1).ToLower();
+
+            return name;
         }
 
         public class Date
@@ -377,6 +386,26 @@ namespace Program
                 return true;
             }
 
+            public bool RemoveVideoType(VideoType videoType)
+            {
+                if(!videoTypeDB.Exists(videoType))
+                    return false;
+
+                foreach (VideoCreator videoCreator in videoCreatorList)
+                { 
+                    int i = 0;
+
+                    while (i < videoCreator.videoList.Count)
+                    {
+                        if (videoType == videoCreator.videoList[i].VideoType)
+                            videoCreator.videoList.RemoveAt(i);
+                        else
+                            i++;
+                    }
+                }
+                return true;
+            }
+
             public void Print(int i)
             {
                 Console.WriteLine(videoCreatorList[i].person.name);
@@ -471,6 +500,14 @@ namespace Program
                 get { return typeName; }
                 set { typeName = value; }
             }
+            public static bool operator== (VideoType first, VideoType second)
+            {
+                return first.typeName == second.typeName;
+            }
+            public static bool operator != (VideoType first, VideoType second)
+            {
+                return first.typeName != second.typeName;
+            }
         }
 
         class VideoTypeDB
@@ -534,7 +571,7 @@ namespace Program
                 videoTypes.Add(new VideoType(typeName));
                 return true;
             }
-            public bool RemoveType(VideoType type)
+            public bool Remove(VideoType type)
             {
                 if (VideoTypeSearch(type) == -1)
                     return false;
@@ -542,12 +579,13 @@ namespace Program
                 videoTypes.Remove(type);
                 return true;
             }
-            public bool RemoveType(string typeName)
+            public bool Remove(string typeName)
             {
                 if (VideoTypeSearch(typeName) == -1)
                     return false;
 
-                videoTypes.Remove(new VideoType(typeName));
+                videoTypes.RemoveAt(Search((typeName)));
+
                 return true;
             }
             public void Print(int i = -1)
@@ -577,6 +615,27 @@ namespace Program
                 }
                 return false;
             }
+            public int Search(VideoType type)
+            {
+                for (int i = 0; i < this.videoTypes.Count; i++)
+                {
+                    if (type.TypeName.Equals(videoTypes[i].TypeName, StringComparison.OrdinalIgnoreCase))
+                        return i;
+                }
+                return -1;
+            }
+
+            public int Search(string name)
+            {
+                for (int i = 0; i < this.videoTypes.Count; i++)
+                {
+                    if (name.Equals(videoTypes[i].TypeName, StringComparison.OrdinalIgnoreCase))
+                        return i;
+                }
+                return -1;
+            }
+
+
             public bool Exists(int? index)
             {
                 if(index == null)
@@ -624,6 +683,8 @@ namespace Program
             bool intInputDoesntExist = true;
             bool stringInputDoesntExists = true;
 
+            NameLetterCorrector(ref input);
+
             while ((intInputDoesntExist = !videoTypeDB.Exists(inputInt)) && (stringInputDoesntExists = !videoTypeDB.Exists(input)))
             {
                 Console.Clear();
@@ -638,6 +699,9 @@ namespace Program
                 if (IsDigit(input))
                     inputInt = Convert.ToInt32(input);
                 inputInt--;
+
+                NameLetterCorrector(ref input);
+
             }
 
             if (intInputDoesntExist == false)
@@ -711,12 +775,10 @@ namespace Program
         }
 
         static bool Load()
-        {
-            
-            if(LoadVideoCreatorListDB() == false)
-                return false;
-
+        { 
             if (LoadVideoType() == false)
+                return false;
+            if (LoadVideoCreatorListDB() == false)
                 return false;
 
             return true;
@@ -739,6 +801,8 @@ namespace Program
             if (name.Equals("quit", StringComparison.OrdinalIgnoreCase))
                 return;
 
+            NameLetterCorrector(ref name);
+
             while (videoCreatorList.Exists(name) || name.Length == 0)
             {
                 Console.Clear();
@@ -748,8 +812,8 @@ namespace Program
 
                 if (name.Equals("quit", StringComparison.OrdinalIgnoreCase))
                     return;
+                NameLetterCorrector(ref name);
             }
-            NameLetterCorrector(ref name);
             videoCreatorList.Register(name);
 
         }
@@ -774,6 +838,8 @@ namespace Program
             if (input == null)
                 input = "NoType";
 
+            NameLetterCorrector(ref input);
+
             while(videoTypeDB.Exists(input) || input == "NoType")
             {
                 Console.Clear();
@@ -785,6 +851,8 @@ namespace Program
 
                 if (input == "quit")
                     return;
+
+                NameLetterCorrector(ref input);
             }
 
             videoTypeDB.RegisterType(input);
@@ -835,8 +903,40 @@ namespace Program
         }
         static void RemoveVideoType(string[] inputArray)
         {
-            
 
+            inputArray = inputArray.Skip(1).ToArray();
+            bool isPreCommanded = inputArray.Length > 0;
+
+            string input;
+
+            if (!isPreCommanded) 
+            {
+                Console.Clear();
+
+                Console.WriteLine("Name of the video type");
+                input = Console.ReadLine();
+            }
+
+            else 
+                input = inputArray[0];
+
+            NameLetterCorrector(ref input);
+
+            while(!videoTypeDB.Exists(input))
+            {
+                Console.Clear();
+
+                Console.WriteLine("Video type doesn't exists (quit to main menu)");
+                input = Console.ReadLine();
+
+                if (input == "quit")
+                    return;
+
+                NameLetterCorrector(ref input);
+            }
+
+            videoCreatorDB.RemoveVideoType(new VideoType(input));
+            videoTypeDB.Remove(input);
         }
 
         //gets date and amount of videos needed to be removed or all videos of a day alltogether
@@ -851,6 +951,8 @@ namespace Program
 
             if(removeTypes[0] == inputArray[0])
                 RemovePerson(inputArray);
+            if(removeTypes[1] == inputArray[0])
+                RemoveVideoType(inputArray);
         }
 
         static bool IsDigit(string str)
