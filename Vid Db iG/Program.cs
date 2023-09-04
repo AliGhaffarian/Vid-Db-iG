@@ -1,5 +1,11 @@
 ﻿
-//some ui doesnt 
+/*-removed some useless args
+ *-renamed some methods
+ *-videotypes from now on will be saved and loaded on VideoTypeData.txt
+ *-new arg added for print (videotype)
+ *-wrapped all save and load methods in Save() and Load() methods
+ */
+
 namespace Program
 {
     public class Program
@@ -444,6 +450,10 @@ namespace Program
         class VideoTypeDB
         {
             List<VideoType> videoTypes = new List<VideoType>();
+            public List<VideoType> VideoTypes
+            {
+                get { return videoTypes; }
+            }
             public VideoTypeDB()
             {
             }
@@ -611,7 +621,7 @@ namespace Program
         }
             
 
-        static bool Load(ref VideoCreatorDB videoCreatorsList)
+        static bool LoadVideoCreatorListDB()
         {
             string fileName = "VideoCreatorsData.txt";
             if (!File.Exists(fileName))
@@ -644,7 +654,7 @@ namespace Program
 
                     }
                     catch { }
-                    videoCreatorsList.VideoCreatorRegister(new VideoCreator(new Person(currentName), Videos));
+                    videoCreatorList.VideoCreatorRegister(new VideoCreator(new Person(currentName), Videos));
 
                     try
                     {
@@ -660,7 +670,31 @@ namespace Program
             return true;
         }
 
-        
+        static bool LoadVideoType()
+        {
+            string fileName = "VideoTypeData.txt";
+            if (!File.Exists(fileName))
+                return false;
+
+            string[] dataLines = File.ReadAllLines(fileName).ToArray();
+
+            foreach (string line in dataLines)
+                videoTypeDB.RegisterType(line);
+
+            return true;
+        }
+
+        static bool Load()
+        {
+            
+            if(LoadVideoCreatorListDB() == false)
+                return false;
+
+            if (LoadVideoType() == false)
+                return false;
+
+            return true;
+        }
 
         static void RegisterPerson(ref VideoCreatorDB videoCreatorList, string[] inputArray)
         {
@@ -857,8 +891,7 @@ namespace Program
 
             return dateOfVideos;
         }
-
-        static bool Save(VideoCreatorDB videoCreatorList)
+        static bool SaveVideoCreatorList()
         {
             try
             {
@@ -890,6 +923,27 @@ namespace Program
             }
             return true;
         }
+        static bool SaveVideoTypeDB()
+        {
+            if (videoTypeDB == null)
+                return true;
+
+            List<string> dataLines = new List<string>();
+
+            foreach (VideoType videoType in videoTypeDB.VideoTypes)
+                dataLines.Add(videoType.TypeName);
+
+            File.WriteAllLines("VideoTypeData.txt", dataLines);
+            return true;
+        }
+        static bool Save()
+        {
+            if(SaveVideoCreatorList() == false)
+                return false;
+            if (SaveVideoTypeDB() == false)
+                return false;
+            return true;
+        }
 
         static void PrintPerson(string name)
         {
@@ -916,12 +970,22 @@ namespace Program
             }
             GetKey();
         }
+        static void PrintAllVideoTypeAndGetKey()
+        {
+            Console.Clear();
+            videoTypeDB.Print();
+            GetKey();
+        }
         static void Prints(string[] inputArray)
         {
             inputArray = inputArray.Skip(1).ToArray();
             if (printTypes[0] == inputArray[0])
                 PrintEveryOne(videoCreatorList);
-            else 
+
+            if (printTypes[1] == inputArray[0])
+                PrintAllVideoTypeAndGetKey();
+
+            else
                 PrintPerson(inputArray[0]);
         }
         static void PrintCommands(string functionName)
@@ -963,7 +1027,7 @@ namespace Program
 
             if (input == "Exit") 
             {
-                Save(videoCreatorList);
+                SaveVideoCreatorList();
                 Environment.Exit(-1);
                 return true;
             }
@@ -1005,21 +1069,20 @@ namespace Program
 
         static VideoCreatorDB videoCreatorList = new VideoCreatorDB();
         static string[] regTypes = { "person", "vid", "vidType" };
-        static string[] printTypes = { "all" };
+        static string[] printTypes = { "all" , "videotypes"};
         static string[] defaultVideoTypes = { "InstagramReel", "InstagramStory", "Other", "YoutubeShort", "YoutubeVideo" };
-        static VideoTypeDB videoTypeDB = new VideoTypeDB(defaultVideoTypes);
+        static VideoTypeDB videoTypeDB = new VideoTypeDB();
 
         static public void Main()
         {
             //VideoCreatorDB videoCreatorList = new VideoCreatorDB();
 
-            Load(ref videoCreatorList);
-
+            Load();
 
             while(true)
                 MainMenu(ref videoCreatorList);
 
-            Save(videoCreatorList);
+            Save();
         }
     }
 }
