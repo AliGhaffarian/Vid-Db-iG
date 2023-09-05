@@ -1280,11 +1280,9 @@ namespace Program
         }
         static void PrintCommands(string functionName)
         {
-            string[] mainMenuCommands = { "reg video", "reg person",
-                                            "print $name", "print all",
-                                            "search date","search vid",
-                                            "del person",
-                                            "edit vid", "edit person" };
+            string[] mainMenuCommands = { "reg [person/vid/videotype]",
+                                            "print [$personName, people, videotype]",
+                                            "remove [videotype, person]"};
 
             Console.Clear();
             switch(functionName)
@@ -1293,6 +1291,7 @@ namespace Program
                     {
                         foreach (string command in mainMenuCommands)
                             Console.WriteLine(command);
+                        Console.WriteLine("$ at the leftside of a argument means variable name");
                         break;
                     }
             }
@@ -1308,21 +1307,24 @@ namespace Program
 
         static bool SpecialCommandHandler(string functionName, string? input)
         {
-            if (input == "Help")
+            if (input is null)
+                return false;
+
+            if (input.Equals("Help", StringComparison.OrdinalIgnoreCase))
             {
                 PrintCommands(functionName);
                 return true;
                 
             }
 
-            if (input == "Exit") 
+            if (input.Equals("Exit", StringComparison.OrdinalIgnoreCase)) 
             {
                 Save();
                 Environment.Exit(-1);
                 return true;
             }
 
-            if(input == "Save")
+            if(input.Equals("Save", StringComparison.OrdinalIgnoreCase))
             {
                 if (Save())
                 {
