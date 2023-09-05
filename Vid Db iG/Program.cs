@@ -304,9 +304,9 @@ namespace Program
             {
                 InitBack();
             }
-            public bool ExistsNullParameter(Date day, int numberOfVideos, VideoType videoType)
+            public bool ExistsNullParameter(Date day, int? numberOfVideos, VideoType videoType)
             {
-                if(day == null || numbersOfVideos == null || videoType is null) 
+                if(day is null || numberOfVideos is null || videoType is null) 
                         return true;
 
                 return false;
